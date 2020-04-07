@@ -1,0 +1,152 @@
+---
+title: "Covid-19 Italy"
+author: "Mohsin Ali"
+date: "4/5/2020"
+output: pdf_document
+---
+
+Loading Libraries:
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+
+```
+
+Loading Data:
+
+```{r}
+covid19_italy <- read.csv("C:/Users/Mohsin Ali/Desktop/Work/Data Sciecne/NoteBooks/R/Datasets/covid19_italy_region.csv")
+
+View(covid19_italy)
+
+str(covid19_italy)
+
+```
+
+Total Cases, Total Deaths and Total Recoverd Cases :
+
+```{r}
+cov_italy <-covid19_italy %>%                                        #splitting date and time into seprate columns
+  separate(Date, into = c("Date", "Time"), sep = "T") %>%
+  mutate(Date = as.Date(Date))
+
+
+cov_italy <- cov_italy%>%
+  group_by(RegionName)%>%
+  mutate(total_deaths = sum(Deaths))
+
+cov_italy <- cov_italy %>%
+  group_by(RegionName)%>%
+  mutate(total_recovered = sum(Recovered))
+
+cov_italy <- cov_italy %>%
+  group_by(RegionName)%>%
+  mutate(total_cases = sum(TotalPositiveCases))
+
+
+cov_italy %>%
+  select(total_cases, total_recovered, total_deaths)
+
+```
+
+First 10 days and last 10 days Total Cases and Death count
+
+```{r}
+
+first_ten <- cov_italy%>%
+ group_by(Date)%>%
+  filter(Date >= "2020-02-24" & Date <= "2020-03-04")%>%
+  summarise(total_cases = sum(TotalPositiveCases), total_deaths = sum(Deaths))
+
+
+last_ten <- cov_italy%>%
+ group_by(Date)%>%
+  filter(Date >= "2020-03-26" & Date <= "2020-04-04")%>%
+  summarise(total_cases_last10 = sum(TotalPositiveCases), total_deaths_last10 = sum(Deaths))
+
+
+
+
+first_ten
+last_ten
+
+
+```
+
+# Tables:
+
+Grouped by Region, and Date
+
+```{r}
+c1 <- covid19_italy %>%
+  group_by(RegionName, Date) %>%
+  summarise(total_cases = sum(TotalPositiveCases), total_deaths = sum(Deaths))
+
+c1
+
+```
+
+Grouped by Region and filtered for March 2020 but first let's split data and time in to seprate columns
+
+```{r}
+
+c2 <- cov_italy %>%
+  group_by(RegionName, Date)%>%
+  filter(Date >= "2020-03-01" & Date <= "2020-03-31")%>%
+  summarise(total_cases_march = sum(TotalPositiveCases), total_deaths_march = sum(Deaths))
+  
+c2
+
+```
+
+Figures:
+
+```{r}
+ggplot(data = c1, mapping = aes(x = Date, y = total_deaths, col = RegionName, group = factor(RegionName))) +
+  stat_smooth(method = "lm", se = FALSE, alpha = 0.5, size =2)+
+  ggtitle("Deaths on Certain Dates")
+
+
+```
+
+Total deaths in the month of march:
+
+```{r}
+plot(x = c2$total_cases_march, y = c2$total_deaths_march, col = "blue", pch = 25, cex = 3,
+     main = "Cases vs deaths in the month of march", xlab = "Cases", ylab = "Deaths")
+
+text(x = c2$total_cases_march, y = c2$total_deaths_march, labels = c2$RegionName, cex=0.5, font=2)
+```
+
+Boxplot for most cases in Regions:
+
+
+```{r}
+top <- cov_italy %>%
+  group_by(RegionName)%>%
+  select(RegionName, TotalPositiveCases, Date)%>%
+  filter(TotalPositiveCases >= 1)
+
+top <- head(top, 10)
+
+ggplot(data = top)+
+  geom_boxplot(mapping = aes(x = RegionName, y = TotalPositiveCases, fill = RegionName))
+
+
+
+```
+
+Regression Plots:
+
+```{r}
+ggplot(data = covid19_italy)+
+  geom_point(mapping = aes(x = Date, y = TotalPositiveCases))
+  
+```
+
+
+
+
+
